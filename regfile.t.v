@@ -112,7 +112,6 @@ output reg		Clk
 
   // Test Case 1: 
   //   Write '42' to register 2, verify with Read Ports 1 and 2
-  //   (Passes because example register file is hardwired to return 42)
   WriteRegister = 5'd2;
   WriteData = 32'd42;
   RegWrite = 1;
@@ -128,7 +127,6 @@ output reg		Clk
 
   // Test Case 2: 
   //   Write '15' to register 2, verify with Read Ports 1 and 2
-  //   (Fails with example register file, but should pass with yours)
   WriteRegister = 5'd2;
   WriteData = 32'd15;
   RegWrite = 1;
@@ -141,7 +139,60 @@ output reg		Clk
     $display("Test Case 2 Failed");
   end
 
+  // Test Case 3:
+  //   Write '42' to register 12, then disable port writing, 
+  //   then attempt to write '12' to register 12
+  //   (Fails if writing is always enabled)
+  WriteRegister = 5'd12;
+  WriteData = 32'd42;
+  RegWrite = 1;
+  ReadRegister1 = 5'd12;
+  ReadRegister2 = 5'd12;
+  #5 Clk=1; #5 Clk=0;
+  RegWrite = 0;
+  WriteData = 32'd12;
+  #5 Clk=1; #5 Clk=0;
 
+  if((ReadData1 !== 42) || (ReadData2 !== 42)) begin
+    dutpassed = 0;
+    $display("Test Case 3 Failed");
+  end
+
+  // Test Case 4:
+  //   Write '42' to register 12, then
+  //   write '40' to register 11
+  //   (Fails if all ports are always written to)
+  //   (Also Fails if either read register reads the wrong register
+  //    which covers test case #5)
+  WriteRegister = 5'd12;
+  WriteData = 32'd42;
+  RegWrite=1;
+  ReadRegister1 = 5'd12;
+  ReadRegister2 = 5'd11;
+  #5 Clk=1; #5 Clk=0;
+  WriteData = 32'd40;
+  WriteRegister = 5'd11;
+  #5 Clk=1; #5 Clk=0;
+
+  if((ReadData1 !== 42) || (ReadData2 !== 40)) begin
+    dutpassed = 0;
+    $display("Test Case 4 Failed");
+  end
+
+  // Test Case 5:
+  //   Write '42' to register 0
+  //   (Fails if register 0 isn't always 0)
+  WriteRegister = 5'd0;
+  WriteData = 32'd42;
+  RegWrite=1;
+  ReadRegister1 = 5'd0;
+  ReadRegister2 = 5'd0;
+  #5 Clk=1; #5 Clk=0;
+
+  if((ReadData1 !== 0) || (ReadData2 !== 0)) begin
+    dutpassed = 0;
+    $display("Test Case 5 Failed");
+  end
   // All done!  Wait a moment and signal test completion.
   #5
   endtest = 1;
